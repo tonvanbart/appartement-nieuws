@@ -12,7 +12,7 @@ backend:
   # `base_url` wijst naar de root-URL van die Worker, zonder pad-suffix.
   # Zie README.md, sectie "OAuth instellen", voor de deploystappen.
   base_url: https://sveltia-cms-auth.jos-onokiewicz.workers.dev
-  auth_endpoint: /authorize
+  auth_endpoint: /auth
 
 # Schrijf direct naar de hoofdbranch — geen editorial workflow.
 publish_mode: simple
