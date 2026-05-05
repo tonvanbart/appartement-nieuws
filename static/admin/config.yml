@@ -7,11 +7,11 @@ backend:
   name: github
   repo: josokw/appartement-nieuws
   branch: main
-  # OAuth: registreer een GitHub OAuth App en zet de bijbehorende auth-proxy URL
-  # in `base_url`. Zie README.md, sectie "OAuth instellen" voor stappen.
-  # Aanbevolen voor productie: een eigen Cloudflare Worker. Voor de demo mag de
-  # door Sveltia gehoste proxy worden gebruikt; vul de juiste URL hieronder in.
-  base_url: https://oauth.sveltia.app # <-- VERIFIEER deze URL bij setup
+  # Sveltia heeft GEEN gehoste OAuth-proxy. Iedere Sveltia-site moet een eigen
+  # Cloudflare Worker draaien (template: github.com/sveltia/sveltia-cms-auth).
+  # `base_url` wijst naar de root-URL van die Worker, zonder pad-suffix.
+  # Zie README.md, sectie "OAuth instellen", voor de deploystappen.
+  base_url: https://sveltia-cms-auth.<SUBDOMAIN>.workers.dev # <-- VERVANG na Worker-deploy
   auth_endpoint: /authorize
 
 # Schrijf direct naar de hoofdbranch — geen editorial workflow.

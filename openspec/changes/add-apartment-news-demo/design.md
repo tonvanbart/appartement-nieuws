@@ -24,7 +24,7 @@ The hard constraints from exploration: Markdown-based content, static-only outpu
 - Email digest, RSS-driven newsletter, or push notifications.
 - Categories, tags, or any taxonomy in the content model.
 - Editorial review, draft preview branches, or multi-editor workflows.
-- Self-hosted OAuth worker (deferred to production hardening).
+- (Originally listed: "Self-hosted OAuth worker, deferred to production hardening." This was based on an incorrect assumption that Sveltia hosts an OAuth proxy. The Worker is in fact required from day one and is part of this change's scope, not deferred.)
 - i18n of the editor's form labels beyond what Sveltia ships out of the box.
 
 ## Decisions
@@ -49,9 +49,13 @@ Sveltia's `object` widget groups fields into a unit that can itself be marked op
 
 GitHub Pages keeps everything on github.com — repo, build, hosting, auth, dashboard. One vendor, one account, fewer things to keep alive. Hugo isn't built natively but the official Hugo docs publish a copy-paste GitHub Actions workflow that handles it. Cloudflare Pages is technically nicer (native Hugo build, faster edge) but adds a second vendor for marginal demo value. The GitHub Pages free tier requires the repo to be **public**, which is acceptable for the demo (fake content) and explicitly *not* acceptable for production — see migration plan.
 
-### Sveltia hosted OAuth proxy for the demo over PAT or self-hosted worker
+### Self-deployed Cloudflare Worker for OAuth (the only viable path) over PAT
 
-Sveltia is a static SPA and cannot keep an OAuth client secret. The demo will register a GitHub OAuth App and use Sveltia's hosted proxy to broker the login. PAT login was rejected because tokens expire and management leaks to the editor. A self-hosted Cloudflare Worker is a better long-term answer (no third-party dependency in the auth path) but is out of scope for the demo and lands as a production hardening step.
+Sveltia is a static SPA and cannot keep an OAuth client secret. Earlier exploration assumed Sveltia provides a hosted OAuth proxy that demos could lean on; verification against the project's own documentation (`github.com/sveltia/sveltia-cms-auth`, `sveltiacms.app/en/docs/backends/github`) shows that Sveltia does **not** run a hosted proxy. Every Sveltia site has to deploy its own Cloudflare Worker from the `sveltia/sveltia-cms-auth` template. This is true for the demo and for production both.
+
+The Worker is a single-file deploy via Cloudflare's "Deploy with Workers" button, free tier, ~10 minutes including the GitHub OAuth App registration. The Worker holds the OAuth client secret as an encrypted environment variable and exposes `/authorize` and `/callback` endpoints that Sveltia hits directly. `backend.base_url` in `config.yml` points at the Worker's root URL.
+
+PAT login remains available as a true break-glass fallback (Sveltia accepts a pasted Personal Access Token) but is not the recommended workflow because tokens expire, must be managed by the editor, and bypass the access-control story tied to GitHub repo collaborators.
 
 ### Editor identity model: collaborator with a separate GitHub account
 
@@ -61,7 +65,7 @@ For the demo, Jos (`josokw`) logs in as the editor. Post-demo, Kitty creates her
 
 - **Phone-photo weight on the live site** → Wire Hugo image processing into PaperMod's post layout (or a small layout override) so the rendered HTML uses resized, format-converted variants with `srcset`. Verify with a real phone photo before declaring the demo done.
 - **PaperMod list view shows placeholder thumbnails for imageless posts** → Override the relevant partial or set theme params to suppress the cover slot when no image is present. Visual check in list view, not just on the post page.
-- **Sveltia hosted OAuth proxy is a third-party dependency on demo day** → Test the full login flow at least once the day before the demo. If the proxy is unreachable, document the PAT fallback as the break-glass path; do not present it as the recommended workflow.
+- **OAuth is gated on a working Cloudflare Worker** → The Worker is fast to set up but it is the single point of failure for editor login. Test the full login flow the day before the demo; if the Worker is misconfigured (missing env vars, wrong callback URL on the GitHub OAuth App, `ALLOWED_DOMAINS` mismatch), the editor sees an opaque OAuth error. Document the PAT-paste fallback as the break-glass path; do not present it as the recommended workflow.
 - **Public repo exposes resident data if used for production** → Treat the public-repo demo as throwaway. Production rollout requires a deliberate host decision (Cloudflare Pages + private repo, or GitHub Pro) before any real names or photos are committed. The migration plan below makes this explicit.
 - **Hugo `baseURL` mismatch breaks links on `josokw.github.io/<repo>/`** → Configure `baseURL` to include the repo path prefix, and verify internal links and the Sveltia bundle paths after first deploy.
 - **GitHub Actions build minutes on a public repo are unmetered, but workflow churn from many daily commits is still noisy** → Acceptable for the use case; flag again only if it changes.
@@ -76,7 +80,7 @@ This is a greenfield change — no existing site, no existing content, no rollba
    - **Path A**: Convert the repo to private and upgrade `josokw` to GitHub Pro (small monthly cost) so GitHub Pages can serve from a private repo.
    - **Path B**: Keep the repo private on the free plan and switch hosting to Cloudflare Pages (free, native Hugo build). This adds a Cloudflare account but no per-month cost.
 3. Custom domain wiring (third-party DNS) happens at the same time as the production host switch. Hugo `baseURL` updates accordingly.
-4. Replace Sveltia's hosted OAuth proxy with a self-hosted Cloudflare Worker once the production host is stable, removing the third-party dependency from the auth path.
+4. The Cloudflare Worker that brokers OAuth is already self-hosted from day one (no Sveltia-hosted alternative exists). Production hardening here is limited to: pinning Worker code to a known-good revision, restricting `ALLOWED_DOMAINS` to the production host, and rotating the GitHub OAuth App's client secret if the demo and production share a Worker.
 
 If the demo fails (OAuth flow won't work, or stakeholders reject the editor UX), the rollback is to delete the GitHub OAuth App, archive the repo, and revisit the editor-surface decision (text editor + GitHub web UI, or a different CMS). Nothing is in production, so no data is at risk.
 

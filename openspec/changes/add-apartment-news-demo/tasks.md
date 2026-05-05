@@ -25,8 +25,10 @@
 
 ## 4. GitHub OAuth and editor identity
 
-- [ ] 4.1 Register a GitHub OAuth App owned by `josokw` with the callback URL pointing at Sveltia's hosted auth proxy
-- [ ] 4.2 Wire Sveltia's `config.yml` backend block to use the GitHub OAuth App via the hosted proxy
+- [ ] 4.1a Deploy `sveltia/sveltia-cms-auth` as a Cloudflare Worker; record its `*.workers.dev` URL
+- [ ] 4.1b Register a GitHub OAuth App with the Worker's `/callback` URL as the Authorization callback URL; copy Client ID and generate Client Secret
+- [ ] 4.1c Add `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, and `ALLOWED_DOMAINS` (set to the Pages hostname) as Worker environment variables
+- [ ] 4.2 Set `backend.base_url` in `static/admin/config.yml` to the Worker URL and push
 - [ ] 4.3 Verify Jos can log in to `/admin/` and that the login token does not appear in any committed file
 - [x] 4.4 Document (in repo `README.md`, brief) the steps to add Kitty post-demo: create her GitHub account, accept the collaborator invite, log in to `/admin/` — no site changes
 - [x] 4.5 Capture a PAT-login fallback path in the same README as a break-glass option only, clearly labelled as not the recommended workflow
@@ -44,7 +46,7 @@
 - [ ] 6.1 Walk through the full editor flow end-to-end: open `/admin/`, log in, create a text-only post, publish, watch it go live
 - [ ] 6.2 Repeat with a phone-photo post; confirm alt-text validation blocks publish until alt is filled
 - [ ] 6.3 Repeat the OAuth login flow on a second device or browser profile to catch device-specific issues before demo day
-- [ ] 6.4 Re-test the full flow the day before the demo, with the actual demo machine and network, so a Sveltia hosted-proxy outage is detected early
+- [ ] 6.4 Re-test the full flow the day before the demo on the actual demo machine and network, so a Worker misconfiguration or Cloudflare outage is detected early
 - [x] 6.5 Prepare a one-page handoff (in repo `README.md`) covering: how the editor logs in, how to add a post, how to delete a post, who to contact when something looks wrong
 
 ## 7. Capture deferred decisions before they are forgotten
@@ -52,4 +54,4 @@
 - [x] 7.1 Record the production-hosting options (Cloudflare Pages + private repo, or GitHub Pro + private repo) in the README's "Before going live" section, with a check-box gate on private repo before any real content
 - [x] 7.2 Record the discovery-channel question (RSS, email digest, WhatsApp link share) as an unresolved item in the same section
 - [x] 7.3 Record the custom-domain handover plan with the third-party DNS provider, including the `baseURL` change Hugo will need at switchover
-- [x] 7.4 Record the self-hosted Cloudflare Worker OAuth proxy as a production hardening item, with a pointer to Sveltia's documentation
+- [x] 7.4 Record OAuth-Worker production-hardening notes (pin Worker code revision, restrict `ALLOWED_DOMAINS` to production host, rotate Client Secret if Worker is shared between demo and production) — the Worker itself is no longer deferred and is set up under task 4.1

@@ -43,12 +43,12 @@ The system SHALL host the demo site on GitHub Pages at the default project URL `
 
 ### Requirement: Editor authenticates via GitHub OAuth
 
-The system SHALL authenticate editors through a GitHub OAuth App registered for this site, brokered by Sveltia's hosted authentication proxy, so that no OAuth client secret is embedded in the static site.
+The system SHALL authenticate editors through a GitHub OAuth App registered for this site, brokered by a self-deployed Cloudflare Worker (instance of `sveltia/sveltia-cms-auth`), so that no OAuth client secret is embedded in the static site. Sveltia does not provide a hosted OAuth proxy; the Worker is therefore in scope for this change, not a production hardening step.
 
 #### Scenario: Editor logs in to the CMS
 
 - **WHEN** the editor clicks "Login with GitHub" in the CMS
-- **THEN** a GitHub OAuth flow runs via Sveltia's hosted auth proxy and returns a token scoped to the configured GitHub OAuth App
+- **THEN** a GitHub OAuth flow runs via the configured Cloudflare Worker and returns a token scoped to the GitHub OAuth App registered for this site
 - **AND** the token is stored in the editor's browser only, not committed to the repository
 
 #### Scenario: A user without repo write access tries to log in
@@ -91,7 +91,7 @@ The system SHALL operate the demo on a public GitHub repository for cost and sim
 
 ### Requirement: Deferred concerns are documented, not implemented
 
-The system SHALL leave the following concerns explicitly out of scope for this change while documenting them so they survive the gap to production: production hosting (private repo, paid plan or alternate host), custom-domain wiring via the third-party DNS provider, content-discovery channel for tenants (RSS, email digest, link-sharing), and self-hosted OAuth proxy.
+The system SHALL leave the following concerns explicitly out of scope for this change while documenting them so they survive the gap to production: production hosting (private repo, paid plan or alternate host), custom-domain wiring via the third-party DNS provider, and content-discovery channel for tenants (RSS, email digest, link-sharing). The Cloudflare Worker for OAuth is **not** on this deferred list — it is required for the demo and is part of this change's scope.
 
 #### Scenario: Stakeholder asks about production readiness
 

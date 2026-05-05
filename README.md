@@ -59,41 +59,46 @@ Volg deze stappen in volgorde. Aanvinken na elke stap zodat niets wordt overgesl
   git push -u origin main
   ```
 
-### 2. GitHub OAuth App registreren
+### 2. Cloudflare Worker voor OAuth deployen
 
-Sveltia heeft een GitHub OAuth App nodig om namens de redacteur te kunnen committen.
+Sveltia is een statische SPA en kan zelf geen OAuth-secret bewaren. **Sveltia heeft géén gehoste OAuth-proxy** — iedere Sveltia-site draait een eigen Cloudflare Worker, zowel voor de demo als voor productie. De Worker is een single-file deploy via Cloudflare's gratis tier.
+
+- [ ] Maak een gratis Cloudflare-account aan als je er nog geen hebt.
+- [ ] Open `https://github.com/sveltia/sveltia-cms-auth` en klik op de **Deploy with Workers**-knop in de README. Dit fork't de auth-Worker en deployt hem.
+- [ ] Noteer de Worker-URL na de deploy, formaat: `https://sveltia-cms-auth.<SUBDOMAIN>.workers.dev`.
+
+### 3. GitHub OAuth App registreren
 
 - [ ] Ga naar `https://github.com/settings/developers` → **OAuth Apps** → **New OAuth App**.
 - [ ] Vul in:
   - **Application name**: `Appartement Nieuws CMS`
   - **Homepage URL**: `https://josokw.github.io/appartement-nieuws/`
-  - **Authorization callback URL**: zie hieronder bij "OAuth-proxy".
-- [ ] Sla de **Client ID** en een gegenereerd **Client Secret** op.
+  - **Authorization callback URL**: `<Worker-URL>/callback` (let op: het pad `/callback` is verplicht)
+- [ ] Sla de **Client ID** op en genereer een **Client Secret**; kopieer beide direct want het secret wordt maar één keer getoond.
 
-### 3. OAuth-proxy
+### 4. Worker-secrets configureren
 
-Sveltia is een statische SPA en kan zelf geen OAuth-secret bewaren. De OAuth-flow loopt via een proxy die het secret beheert. Twee opties:
+- [ ] Ga in het Cloudflare-dashboard naar de zojuist gedeployde Worker → **Settings → Variables**.
+- [ ] Voeg toe (klik **Add variable**):
+  - `GITHUB_CLIENT_ID` — Client ID uit stap 3 (plain text)
+  - `GITHUB_CLIENT_SECRET` — Client Secret uit stap 3 (vink **Encrypt** aan)
+  - `ALLOWED_DOMAINS` — `josokw.github.io` (begrenst welke sites deze Worker mogen gebruiken)
+- [ ] **Save and deploy** in Cloudflare.
 
-**Optie A (snelst voor de demo): Sveltia's gehoste proxy.**
+### 5. Sveltia-config bijwerken en pushen
 
-- [ ] Verifieer de actuele URL van Sveltia's gehoste OAuth-proxy in de Sveltia-documentatie (`https://github.com/sveltia/sveltia-cms`).
-- [ ] Vul die URL in als `backend.base_url` in `static/admin/config.yml` (op het moment van schrijven van deze README staat er een placeholder die geverifieerd moet worden).
-- [ ] Stel de **Authorization callback URL** in de OAuth App in op het callback-endpoint van die proxy.
+- [ ] Open `static/admin/config.yml`.
+- [ ] Vervang de placeholder in `base_url` door de Worker-URL uit stap 2 (zonder pad-suffix).
+- [ ] Commit en push naar `main`. De GitHub Actions-workflow herbouwt en deployt de site.
 
-**Optie B (aan te bevelen voor productie): eigen Cloudflare Worker.**
-
-- [ ] Volg de Sveltia-handleiding voor het deployen van de meegeleverde Cloudflare Worker als OAuth-proxy.
-- [ ] Vul de Worker-URL in als `backend.base_url`.
-- [ ] Geen externe afhankelijkheid in het auth-pad; aanbevolen zodra echte content op de site komt.
-
-### 4. GitHub Pages aanzetten
+### 6. GitHub Pages aanzetten
 
 - [ ] Ga in de repo naar **Settings → Pages**.
 - [ ] Bij **Source** kies **GitHub Actions**.
 - [ ] Push een commit naar `main`. De workflow `.github/workflows/hugo.yml` draait automatisch en publiceert de site.
 - [ ] Verifieer dat de site opent op `https://josokw.github.io/appartement-nieuws/`.
 
-### 5. Verificatie
+### 7. Verificatie
 
 - [ ] Open `https://josokw.github.io/appartement-nieuws/admin/` in een browser.
 - [ ] Klik op **Login with GitHub** en doorloop de OAuth-flow.
@@ -151,7 +156,11 @@ Kies één van:
 
 ### OAuth-hardening
 
-- [ ] Vervang de gehoste OAuth-proxy door een eigen **Cloudflare Worker** (zie Sveltia-documentatie). Hierna zit er geen externe partij meer in het auth-pad.
+De Cloudflare Worker is vanaf dag één al self-hosted (Sveltia heeft geen gehoste alternatief). Productie-hardening hier beperkt zich tot:
+
+- [ ] Pin de Worker-code aan een vaste revisie van `sveltia/sveltia-cms-auth` zodat ongeplande upstream-wijzigingen niet doorkomen.
+- [ ] Scherm `ALLOWED_DOMAINS` af tot het productiedomein zodra dat is ingesteld; verwijder de demo-host als die niet meer in gebruik is.
+- [ ] Roteer het GitHub OAuth App Client Secret als demo en productie dezelfde Worker delen.
 
 ### Custom domein
 
@@ -182,12 +191,14 @@ Wat in deze repo al is opgeleverd:
 - Sveltia-configuratie met Nederlandse labels en een optionele cover-foto met verplichte alt-tekst.
 - Vier text-only sample-berichten als page bundles.
 - GitHub Actions-workflow die op iedere push naar `main` bouwt en naar Pages deployt.
-- Deze README met de stappen die nog door Jos op github.com moeten worden uitgevoerd.
+- Deze README met de stappen die nog door Jos op github.com en Cloudflare moeten worden uitgevoerd.
 
 Wat nog door Jos gedaan wordt:
 
-- Repo aanmaken op GitHub en push uitvoeren.
-- OAuth App registreren en `base_url` in `static/admin/config.yml` verifiëren / invullen.
-- GitHub Pages aanzetten.
-- Demo-dry-run met echte foto.
+- Repo aanmaken op GitHub onder `josokw` en push uitvoeren.
+- Cloudflare Worker (`sveltia/sveltia-cms-auth`) deployen voor OAuth.
+- GitHub OAuth App registreren en de Worker-secrets configureren.
+- `base_url` in `static/admin/config.yml` bijwerken naar de Worker-URL en pushen.
+- GitHub Pages aanzetten in de repo-instellingen.
+- Demo-dry-run, inclusief publicatie van een bericht met echte foto.
 - Kitty toevoegen na de demo.
