@@ -1,0 +1,13 @@
+/public/
+/resources/
+/.hugo_build.lock
+
+# OS / editor cruft
+.DS_Store
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# Lokale Claude Code-instellingen (project-specifiek, niet publiek)
+.claude/

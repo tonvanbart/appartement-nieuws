@@ -1,0 +1,121 @@
+# Sveltia CMS configuratie voor Appartement Nieuws.
+#
+# Sveltia is Decap-compatibel; deze configuratie gebruikt de Decap-syntaxis.
+# UI-labels en hints zijn in het Nederlands.
+
+backend:
+  name: github
+  repo: josokw/appartement-nieuws
+  branch: main
+  # OAuth: registreer een GitHub OAuth App en zet de bijbehorende auth-proxy URL
+  # in `base_url`. Zie README.md, sectie "OAuth instellen" voor stappen.
+  # Aanbevolen voor productie: een eigen Cloudflare Worker. Voor de demo mag de
+  # door Sveltia gehoste proxy worden gebruikt; vul de juiste URL hieronder in.
+  base_url: https://oauth.sveltia.app # <-- VERIFIEER deze URL bij setup
+  auth_endpoint: /authorize
+
+# Schrijf direct naar de hoofdbranch — geen editorial workflow.
+publish_mode: simple
+
+# Per collection overschrijven; site-niveau staat leeg.
+media_folder: ""
+public_folder: ""
+
+site_url: https://josokw.github.io/appartement-nieuws/
+display_url: https://josokw.github.io/appartement-nieuws/
+logo_url: ""
+
+locale: nl
+
+# Hint-teksten en placeholders worden in de formulieren in het Nederlands getoond.
+
+collections:
+  - name: posts
+    label: "Berichten"
+    label_singular: "Bericht"
+    description: "Korte mededelingen en nieuwsberichten voor de bewoners."
+    folder: "content/posts"
+    create: true
+    delete: true
+
+    # Page-bundle indeling: elk bericht is een eigen map met index.md plus eventuele afbeelding.
+    # Sveltia plaatst geüploade media in dezelfde map als de entry.
+    path: "{{slug}}/index"
+    media_folder: ""
+    public_folder: ""
+
+    # Bestandsnaam (slug) bevat de datum als prefix voor sortering en uniciteit.
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+
+    # Front matter in TOML, zodat het overeenkomt met `archetypes/posts.md`.
+    extension: "md"
+    format: "toml-frontmatter"
+    frontmatter_delimiter: ["+++", "+++"]
+
+    # Sortering in Sveltia-overzicht: nieuwste bovenaan.
+    sortable_fields: ["date", "title"]
+    view_filters:
+      - label: "Concepten"
+        field: draft
+        pattern: true
+      - label: "Gepubliceerd"
+        field: draft
+        pattern: false
+
+    fields:
+      - name: title
+        label: "Titel"
+        widget: string
+        required: true
+        hint: "Korte, duidelijke titel — verschijnt bovenaan het bericht en in de berichtenlijst."
+
+      - name: date
+        label: "Datum en tijd"
+        widget: datetime
+        required: true
+        date_format: "YYYY-MM-DD"
+        time_format: "HH:mm"
+        format: "YYYY-MM-DDTHH:mm:ssZ"
+        hint: "Wordt automatisch ingevuld op het moment van publiceren. Pas alleen aan als u een bericht voor- of achteraf wilt dateren."
+
+      - name: summary
+        label: "Samenvatting"
+        widget: text
+        required: false
+        hint: "Eén zin die in de berichtenlijst en bovenaan het bericht zichtbaar is. Mag leeg blijven."
+
+      - name: cover
+        label: "Foto"
+        widget: object
+        required: false
+        collapsed: true
+        summary: "{{fields.alt}}"
+        hint: "Optioneel. Open dit blok om een foto bij het bericht te plaatsen. Alt-tekst is dan verplicht."
+        fields:
+          - name: image
+            label: "Afbeelding"
+            widget: image
+            required: true
+            choose_url: false
+            media_library:
+              max_file_size: 10485760 # 10 MB; grotere bestanden worden geweigerd
+            hint: "Sleep een foto in dit veld of klik om te selecteren. Foto's van een telefoon mogen tot 10 MB groot zijn."
+          - name: alt
+            label: "Alt-tekst (verplicht)"
+            widget: string
+            required: true
+            pattern: ['.{3,}', "Alt-tekst moet minstens 3 tekens bevatten."]
+            hint: "Beschrijf in één zin wat er op de foto te zien is. Dit is voor mensen die de foto niet kunnen zien."
+
+      - name: body
+        label: "Inhoud"
+        widget: markdown
+        required: true
+        hint: "De tekst van het bericht. Markdown-opmaak is toegestaan."
+
+      - name: draft
+        label: "Concept"
+        widget: boolean
+        default: false
+        required: false
+        hint: "Aanvinken om dit bericht als concept te bewaren zonder het te publiceren."
