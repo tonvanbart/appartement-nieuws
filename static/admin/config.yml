@@ -11,7 +11,7 @@ backend:
   # Cloudflare Worker draaien (template: github.com/sveltia/sveltia-cms-auth).
   # `base_url` wijst naar de root-URL van die Worker, zonder pad-suffix.
   # Zie README.md, sectie "OAuth instellen", voor de deploystappen.
-  base_url: https://sveltia-cms-auth.<SUBDOMAIN>.workers.dev # <-- VERVANG na Worker-deploy
+  base_url: https://sveltia-cms-auth.jos-onokiewicz.workers.dev
   auth_endpoint: /authorize
 
 # Schrijf direct naar de hoofdbranch — geen editorial workflow.
