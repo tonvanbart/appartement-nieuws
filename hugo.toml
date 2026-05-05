@@ -22,13 +22,13 @@ minifyOutput = true
 [params]
 env = "production"
 description = "Nieuws en mededelingen voor de bewoners van het appartementencomplex."
-DateFormat = "2 januari 2006"
+DateFormat = "02-01-2006"
 defaultTheme = "auto"
 disableThemeToggle = false
 ShowReadingTime = false
 ShowShareButtons = false
 ShowPostNavLinks = true
-ShowBreadCrumbs = false
+ShowBreadCrumbs = true
 ShowCodeCopyButtons = false
 ShowWordCount = false
 ShowToc = false
@@ -60,3 +60,18 @@ unsafe = false
 endLevel = 3
 ordered = false
 startLevel = 2
+
+[[menu.main]]
+name = "Startpagina"
+url = "/"
+weight = 10
+
+[[menu.main]]
+name = "Berichten"
+url = "/posts/"
+weight = 20
+
+[[menu.main]]
+name = "Over deze site"
+url = "/over/"
+weight = 30
